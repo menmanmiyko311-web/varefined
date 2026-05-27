@@ -1491,10 +1491,8 @@ function apply_task_patch_delayed()
 
         function news_manager.send_task(actor, type, tsk)
             local task_id = tsk and tsk:get_id() or "unknown"
-            printf("[VA Refined Task] Type: %s | ID: %s", tostring(type), tostring(task_id))
 
             if this.actor_speak_default and this.player_with_lang_muffle_random then
-                printf("[VA Refined Task] AGDD functions found! Trying to play sound...")
                 
                 if type == "new" then
                     this.actor_speak_default_ignore_conditionals(this.player_with_lang_muffle_random("task_accept"), 1.0, 2500, 100)
@@ -1592,5 +1590,4 @@ function on_game_start()
             end
         end
     end
-end
 end
