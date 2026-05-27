@@ -1477,6 +1477,48 @@ end
 
 -- LOOT OPEN REACTIONS PART ENDS HERE
 --------------------------------------
+--------------------------------------
+-- TASK REACTIONS
+--------------------------------------
+
+local is_task_patch_applied = false
+
+function apply_task_patch_delayed()
+    if is_task_patch_applied then return end
+    
+    if news_manager and news_manager.send_task then
+        local old_send_task = news_manager.send_task
+
+        function news_manager.send_task(actor, type, tsk)
+            local task_id = tsk and tsk:get_id() or "unknown"
+            printf("[VA Refined Task] Type: %s | ID: %s", tostring(type), tostring(task_id))
+
+            if this.actor_speak_default and this.player_with_lang_muffle_random then
+                printf("[VA Refined Task] AGDD functions found! Trying to play sound...")
+                
+                if type == "new" then
+                    this.actor_speak_default_ignore_conditionals(this.player_with_lang_muffle_random("task_accept"), 1.0, 2500, 100)
+
+                elseif type == "updated" then
+                    this.actor_speak_default_ignore_conditionals(this.player_with_lang_muffle_random("task_updated"), 1.0, 2500, 100)
+
+                elseif type == "complete" then
+                    this.actor_speak_with_priority_ignore_conditionals(this.player_with_lang_muffle_random("task_complete"), 1.0, 2500, 100)
+
+                elseif type == "fail" then
+                    this.actor_speak_with_priority_ignore_conditionals(this.player_with_lang_muffle_random("task_fail"), 1.0, 2500, 100)
+                end
+            end
+
+            return old_send_task(actor, type, tsk)
+        end
+        
+        is_task_patch_applied = true
+
+        -- I delete things as soon as I no longer need them to lighten the load.
+        UnregisterScriptCallback("actor_on_update", apply_task_patch_delayed)
+    end
+end
 
 function save_state(mdata)
     local remaining = random_long_shout_cooldown - time_global()
@@ -1510,6 +1552,8 @@ function actor_on_first_update()
     on_option_change()
 end
 
+
+
 function on_game_start()
     -- lets the engine know we want these function to run when certain things happen
     RegisterScriptCallback("on_option_change", on_option_change)
@@ -1531,6 +1575,7 @@ function on_game_start()
     RegisterScriptCallback("actor_on_item_before_use", actor_on_item_before_use) -- runs when actor uses an item
     RegisterScriptCallback("ActorMenu_on_before_init_mode", on_ActorMenu_on_before_init_mode) -- runs when actor opens a container/inventory
     RegisterScriptCallback("monster_on_loot_init", monster_on_loot_init) -- runs when actor opens a container/inventory
+    RegisterScriptCallback("actor_on_update", apply_task_patch_delayed)
     RegisterScriptCallback("save_state", save_state)
     RegisterScriptCallback("load_state", load_state)
     build_item_type_cache()
