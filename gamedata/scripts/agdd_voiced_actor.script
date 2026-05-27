@@ -1477,6 +1477,47 @@ end
 
 -- LOOT OPEN REACTIONS PART ENDS HERE
 --------------------------------------
+--------------------------------------
+-- TASK REACTIONS
+--------------------------------------
+
+local is_task_patch_applied = false
+
+function apply_task_patch_delayed()
+    if is_task_patch_applied then return end
+    
+    if news_manager and news_manager.send_task then
+        local old_send_task = news_manager.send_task
+
+        function news_manager.send_task(actor, type, tsk)
+            local task_id = tsk and tsk:get_id() or "unknown"
+
+            if this.actor_speak_default and this.player_with_lang_muffle_random then
+                
+                if type == "new" then
+                    this.actor_speak_default_ignore_conditionals(this.player_with_lang_muffle_random("task_accept"), 1.0, 2500, 100)
+
+                elseif type == "updated" then
+                    this.actor_speak_default_ignore_conditionals(this.player_with_lang_muffle_random("task_updated"), 1.0, 2500, 100)
+
+                elseif type == "complete" then
+                    this.actor_speak_with_priority_ignore_conditionals(this.player_with_lang_muffle_random("task_complete"), 1.0, 2500, 100)
+
+                elseif type == "fail" then
+                    this.actor_speak_with_priority_ignore_conditionals(this.player_with_lang_muffle_random("task_fail"), 1.0, 2500, 100)
+                end
+            end
+
+            return old_send_task(actor, type, tsk)
+        end
+        
+        is_task_patch_applied = true
+
+        -- I delete things as soon as I no longer need them to lighten the load.
+        UnregisterScriptCallback("actor_on_update", apply_task_patch_delayed)
+    end
+end
+
 
 function save_state(mdata)
     local remaining = random_long_shout_cooldown - time_global()
@@ -1535,4 +1576,16 @@ function on_game_start()
     RegisterScriptCallback("load_state", load_state)
     build_item_type_cache()
     init_languages()
+
+    if arti_jamming and arti_jamming.jam_swearing then
+        local original_wpo_jam_swearing = arti_jamming.jam_swearing
+
+        arti_jamming.jam_swearing = function()
+            original_wpo_jam_swearing() 
+            
+            if actor_on_weapon_jammed then
+                actor_on_weapon_jammed(nil)
+            end
+        end
+    end
 end
