@@ -1580,4 +1580,17 @@ function on_game_start()
     RegisterScriptCallback("load_state", load_state)
     build_item_type_cache()
     init_languages()
+
+    if arti_jamming and arti_jamming.jam_swearing then
+        local original_wpo_jam_swearing = arti_jamming.jam_swearing
+
+        arti_jamming.jam_swearing = function()
+            original_wpo_jam_swearing() 
+            
+            if actor_on_weapon_jammed then
+                actor_on_weapon_jammed(nil)
+            end
+        end
+    end
+end
 end
